@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity cpld is
+entity main is
 	port (
 		-- global
 		clk, nrst : in std_logic;
@@ -31,9 +31,9 @@ entity cpld is
 		led : out std_logic
 		
 	);
-end cpld;
+end main;
 
-architecture rtl of cpld is
+architecture rtl of main is
 	signal led_int : std_logic := '0';
 	signal cpu_a_int : std_logic_vector(7 downto 0) := x"00";
 	signal cpu_d : std_logic_vector(7 downto 0);
@@ -45,12 +45,18 @@ architecture rtl of cpld is
 	signal spi_mosi_reg : std_logic_vector(7 downto 0) := x"00";
 	signal spi_cs_reg : std_logic := '0';
 
+	signal optrom : std_logic := '0';
+
 	constant SPI_CS_REG_ADDR : std_logic_vector(7 downto 0) := x"71";
 	constant SPI_DATA_REG_ADDR : std_logic_vector(7 downto 0) := x"72";
 	constant DUMMY_REG_ADDR : std_logic_vector(7 downto 0) := x"70";
+	constant CSROM_ADDR : std_logic_vector(7 downto 0) := x"E-";
+
 
 --	signal test_read_cs : std_logic;
 begin
+
+led <= optrom;
 
 --led <= '1' when spi_busy else '0';
 --led <= '1' when cpu_do_active = '1' else '0';
@@ -79,7 +85,7 @@ sram_ncs <= '0' when cpu_a(15) = '1' and cpu_iom = '0' and ramrst = '1' else '1'
 sram_nwe <= cpu_nwr when ramrst = '1' else '1';
 sram_noe <= cpu_nrd when ramrst = '1' else '1';
 
-sram_a(15) <= '0';
+sram_a(15) <= optrom;
 sram_a(14) <= cpu_a(14);
 
 process(clk)
@@ -87,7 +93,7 @@ begin
 	if rising_edge(clk) then
 
 		if cpu_iom = '1' and cpu_nrd = '0' then
-			case(cpu_a_int) is
+			case?(cpu_a_int) is
 				when DUMMY_REG_ADDR =>
 					cpu_do_active <= '1';
 					cpu_do <= x"44";
@@ -99,13 +105,16 @@ begin
 					cpu_do <= "0000000" & spi_cs_reg;
 				when others =>
 					cpu_do_active <= '0';
-			end case;
+			end case?;
 		else 
 			cpu_do_active <= '0';
 		end if;
 	
 		if cpu_iom = '1' and cpu_nwr = '0' then
-			case(cpu_a_int) is
+			case?(cpu_a_int) is			
+				when CSROM_ADDR =>
+					-- duplicate register for mapping option ROM
+					optrom <= cpu_ad(0);
 				when SPI_DATA_REG_ADDR =>
 					-- launch SPI transaction
 					if not spi_busy then
@@ -117,7 +126,7 @@ begin
 					-- only one CS for now, not gonna waste cells on entire bytes
 					spi_cs_reg <= cpu_ad(0);
 				when others => null;
-			end case;
+			end case?;
 		end if;
 		
 		if spi_busy then

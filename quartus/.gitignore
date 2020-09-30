@@ -1,4 +1,5 @@
 db/
+incremental_db/
 *.rpt
 *.summary
 *.cdf
@@ -6,4 +7,5 @@ db/
 *.dpf
 *.pof
 *.pin
+*.jdi
 serv_req_info.txt

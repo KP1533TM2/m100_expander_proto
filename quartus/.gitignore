@@ -1,1 +1,9 @@
 db/
+*.rpt
+*.summary
+*.cdf
+*.done
+*.dpf
+*.pof
+*.pin
+serv_req_info.txt

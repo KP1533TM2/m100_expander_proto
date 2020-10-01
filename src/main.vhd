@@ -36,7 +36,6 @@ end main;
 architecture rtl of main is
 	signal led_int : std_logic := '0';
 	signal cpu_a_int : std_logic_vector(7 downto 0) := x"00";
-	signal cpu_d : std_logic_vector(7 downto 0);
 	signal cpu_do : std_logic_vector(7 downto 0) := x"00";
 	signal cpu_do_active : std_logic := '0';
 	
@@ -46,33 +45,25 @@ architecture rtl of main is
 	signal spi_cs_reg : std_logic := '0';
 
 	signal optrom : std_logic := '0';
+	signal optrom_we : std_logic := '0';
 
 	constant SPI_CS_REG_ADDR : std_logic_vector(7 downto 0) := x"71";
 	constant SPI_DATA_REG_ADDR : std_logic_vector(7 downto 0) := x"72";
+	constant MASK_RAM_REG_ADDR : std_logic_vector(7 downto 0) := x"73";
 	constant DUMMY_REG_ADDR : std_logic_vector(7 downto 0) := x"70";
 	constant CSROM_ADDR : std_logic_vector(7 downto 0) := x"E-";
-
-
---	signal test_read_cs : std_logic;
 begin
 
 led <= optrom;
 
---led <= '1' when spi_busy else '0';
---led <= '1' when cpu_do_active = '1' else '0';
-
 sd_ncs <= not spi_cs_reg;
 
-cpu_d <= cpu_ad;
 cpu_ad <= cpu_do when cpu_do_active = '1' else "ZZZZZZZZ";
-
--- test
---cpu_ad <= x"ff" when test_read_cs = '1' else "ZZZZZZZZ";
---test_read_cs <= '1' when cpu_iom = '1' and cpu_nrd = '0' and cpu_a_int = x"70" else '0';
---led <= '1' when test_read_cs = '1' else '0';
 
 process(cpu_ale)
 begin
+--	if nrst = '1' then
+--		cpu_a_int <= x"00";		
 	if falling_edge(cpu_ale) then
 		cpu_a_int <= cpu_ad;
 	end if;
@@ -81,19 +72,40 @@ end process;
 sd_sck <= not clk when spi_busy else '0';
 sd_mosi <= spi_mosi_reg(7);
 
-sram_ncs <= '0' when cpu_a(15) = '1' and cpu_iom = '0' and ramrst = '1' else '1';
-sram_nwe <= cpu_nwr when ramrst = '1' else '1';
-sram_noe <= cpu_nrd when ramrst = '1' else '1';
-
-sram_a(15) <= optrom;
-sram_a(14) <= cpu_a(14);
-
-process(clk)
+process(cpu_a,cpu_iom,cpu_nrd,cpu_nwr,optrom_we,optrom,nrst)
 begin
-	if rising_edge(clk) then
+	if cpu_iom = '0' and cpu_a(15) = '0' then
+		-- Access to "shadow RAM" behind system ROM @ 0x0000...0x7fff
+		sram_nwe <= cpu_nwr or (not optrom_we);
+		sram_noe <= cpu_nrd or (not optrom);
+		sram_ncs <= '0';
+	elsif cpu_iom = '0' and cpu_a(15) = '1' then
+		-- Access to normal 32k RAM @ 0x8000...0xffff
+		sram_nwe <= cpu_nwr;
+		sram_noe <= cpu_nrd;
+		sram_ncs <= '0';
+	else
+		sram_nwe <= '1';
+		sram_noe <= '1';
+		sram_ncs <= '1';
+	end if;
+
+	-- No banking yet, just a simple address passthrough
+	sram_a(15 downto 14) <= cpu_a(15 downto 14);
+end process;
+
+process(clk, nrst)
+begin
+	if nrst = '1' then
+		optrom <= '0';
+		optrom_we <= '0';
+	elsif rising_edge(clk) then
 
 		if cpu_iom = '1' and cpu_nrd = '0' then
 			case?(cpu_a_int) is
+				when MASK_RAM_REG_ADDR =>
+					cpu_do_active <= '1';
+					cpu_do <= "0000000" & optrom_we;
 				when DUMMY_REG_ADDR =>
 					cpu_do_active <= '1';
 					cpu_do <= x"44";
@@ -112,6 +124,8 @@ begin
 	
 		if cpu_iom = '1' and cpu_nwr = '0' then
 			case?(cpu_a_int) is			
+				when MASK_RAM_REG_ADDR =>
+					optrom_we <= cpu_ad(0);
 				when CSROM_ADDR =>
 					-- duplicate register for mapping option ROM
 					optrom <= cpu_ad(0);

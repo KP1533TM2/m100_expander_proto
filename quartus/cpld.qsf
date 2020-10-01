@@ -70,3 +70,4 @@ set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING OFF
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
 set_instance_assignment -name CLOCK_SETTINGS clk -to clk
 set_global_assignment -name SDC_FILE cpld.sdc
+set_location_assignment PIN_1 -to nrst

@@ -1,0 +1,8 @@
+*.obj
+*.ide
+*.ba
+*.co
+# those should be left alone
+#*.lkr
+#*.asm
+#*.prj

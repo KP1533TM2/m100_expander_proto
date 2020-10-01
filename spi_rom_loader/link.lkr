@@ -1,0 +1,3 @@
+OBJFILE spirom.obj
+CODE NAME=.aseg START=0xe380 END=0xf380
+;CODE NAME=.aseg START=0xea60 END=0xeae0

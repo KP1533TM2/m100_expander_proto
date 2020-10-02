@@ -34,19 +34,18 @@ start:
 	out		SPI_CS_REG ; enable flash ROM /CS
 	mvi		a, SPI_READ_DATA	; SPI flash read command
 	out		SPI_DATA_REG
-	nop
-	nop		; for good measure
+;	nop
+;	nop
 	mov		a, h ; ROM A[23:16]
 	out		SPI_DATA_REG
-	nop
-	nop
+;	nop
+;	nop
 	mov		a, l ; ROM A[15:8]
 	out		SPI_DATA_REG
-	nop
-	nop
+;	nop
+;	nop
 	mvi		a, 00h ; ROM A[7:0] - always 0
 	out		SPI_DATA_REG
-	nop
 	nop
 	
 	lxi		b, 8000h ; loop through 32768 bytes
@@ -54,8 +53,8 @@ start:
 load_loop:
 	; payload
 	out		SPI_DATA_REG ; just output whatever byte
-	nop
-	nop
+;	nop
+;	nop
 	in		SPI_DATA_REG ;  read back the result, ROM should return data
 	mov		M, a ; store byte in shadow RAM
 	inx		h ; ptr++

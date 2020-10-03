@@ -12,9 +12,7 @@ entity main is
 		cpu_a : in std_logic_vector(15 downto 14); -- 2
 		cpu_nrd, cpu_nwr, cpu_ale,
 		cpu_iom : in std_logic; -- 3
-		
-		ramrst : in std_logic;
-		
+
 		-- SRAM signals
 		sram_a : out std_logic_vector(15 downto 14); -- 3
 		sram_ncs,
@@ -62,8 +60,6 @@ cpu_ad <= cpu_do when cpu_do_active = '1' else "ZZZZZZZZ";
 
 process(cpu_ale)
 begin
---	if nrst = '1' then
---		cpu_a_int <= x"00";		
 	if falling_edge(cpu_ale) then
 		cpu_a_int <= cpu_ad;
 	end if;

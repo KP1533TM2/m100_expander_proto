@@ -8,12 +8,10 @@ MASK_RAM_REG equ 73h
 
 SPI_READ_DATA equ 03h ; + A[23:16], A[15:8], A[7:0]
 OPTROM_REG equ 68h
-;
 
 	aseg
 
 	org	0e380h ;58240
-	;org 60000
 
 start:
 	di
@@ -34,27 +32,18 @@ start:
 	out		SPI_CS_REG ; enable flash ROM /CS
 	mvi		a, SPI_READ_DATA	; SPI flash read command
 	out		SPI_DATA_REG
-;	nop
-;	nop
 	mov		a, h ; ROM A[23:16]
 	out		SPI_DATA_REG
-;	nop
-;	nop
 	mov		a, l ; ROM A[15:8]
 	out		SPI_DATA_REG
-;	nop
-;	nop
 	mvi		a, 00h ; ROM A[7:0] - always 0
 	out		SPI_DATA_REG
-	nop
 	
 	lxi		b, 8000h ; loop through 32768 bytes
 	lxi		h, 0	; set destination address
 load_loop:
 	; payload
 	out		SPI_DATA_REG ; just output whatever byte
-;	nop
-;	nop
 	in		SPI_DATA_REG ;  read back the result, ROM should return data
 	mov		M, a ; store byte in shadow RAM
 	inx		h ; ptr++
@@ -69,6 +58,10 @@ load_loop:
 	out		MASK_RAM_REG ; disable shadow writes
 	out		SPI_CS_REG ; disable /CS
 	
+;	mvi		a, 01h
+;	out		OPTROM_REG
+;	rst		0
+	
 	ei
-	ret
+	rst		0
 	

@@ -58,7 +58,6 @@ set_location_assignment PIN_18 -to sram_noe
 set_location_assignment PIN_14 -to sram_nwe
 set_location_assignment PIN_19 -to sram_a[14]
 set_location_assignment PIN_16 -to sram_a[15]
-set_location_assignment PIN_12 -to ramrst
 
 set_location_assignment PIN_9 -to sd_miso
 set_location_assignment PIN_5 -to sd_mosi

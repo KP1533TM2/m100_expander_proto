@@ -70,6 +70,7 @@ the moment, consecutively starting at address 0:
 * Battery-backed RAM still corrupts itself after power-on, not during
 restart/reset though - might need pullups or has something to do with
 MAX3000A power sequencing
+
 **Solved** by wiring *Ⓐ signal (system bus pin 16) to SRAM CE2 - SRAM
 effectively becomes active only when CPU is active. Also added 10k
 pulldown resistor for good measure.
